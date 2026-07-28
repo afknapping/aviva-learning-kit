@@ -14,7 +14,7 @@ tracks progress over time.
 	around the AVIVA model's five phases (Arrival, Activate prior
 	knowledge, Inform, Process, Evaluate).
 - `SKILL-interactive-mc-quiz-2.6.md` — generates a multiple-choice quiz for any topic just covered via a live in-chat auto-scoring widget, plus a pipeline so a fresh test is always ready to go;
-- `SKILL-learning-project-orchestrator-1.3.md` — bootstraps a new
+- `SKILL-learning-project-orchestrator-1.5.md` — bootstraps a new
 	learning project (folder skeleton, progress file, the two skills
 	above) and runs the ongoing per-session loop in an existing one:
 	pick topic → teach → quiz → update progress.
@@ -86,6 +86,16 @@ three don't have to be read side by side to see what changed when.
 - **1.0** — Initial version (as `sokratische-lehre`).
 
 ### `learning-project-orchestrator`
+- **1.5** — Added the "Demo-safe PROGRESS.md export" convention:
+	`aviva-learning-kit/PROGRESS.md` is a format demo only (currently
+	just the `Mathematik` example) and never receives a wholesale copy
+	of the real project-root file — fixes a privacy slip from 1.4 where
+	personal learning data briefly landed in the shared kit folder.
+- **1.4** — Added the "PROGRESS.md structured fields" convention: each
+	topic section now starts with a fenced YAML block for mechanical
+	fields (`last_worked`, `confidence`, `status`, `next_topic`,
+	`active_quiz`, `material_files`), with prose kept only for nuance —
+	scriptable where it matters, readable where nuance matters.
 - **1.3** — Added the "Anticipatory readiness" convention: the next
 	queued quiz and the next lesson's groundwork (topic decided,
 	material persisted, opening move drafted) stay pre-staged so the
