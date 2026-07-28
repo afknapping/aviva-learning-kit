@@ -9,20 +9,75 @@ tracks progress over time.
 <details>
   <summary>What's in this folder</summary>
 
-- `SKILL-heuristic-teaching-dialogue-aviva-2.1.md` — teaches new
+- `SKILL-heuristic-teaching-dialogue-aviva-2.2.md` — teaches new
 	material through guided questions rather than explanation, structured
 	around the AVIVA model's five phases (Arrival, Activate prior
 	knowledge, Inform, Process, Evaluate).
-- `SKILL-interactive-mc-quiz-2.1.md` — generates a self-contained,
+- `SKILL-interactive-mc-quiz-2.4.md` — generates a self-contained,
 	single-file HTML multiple-choice quiz for any topic just covered,
-	with a file pipeline so a fresh test is always ready to go.
-- `SKILL-learning-project-orchestrator-1.0.md` — bootstraps a new
+	with a file pipeline so a fresh test is always ready to go, plus a
+	live in-chat auto-scoring widget alongside it.
+- `SKILL-learning-project-orchestrator-1.1.md` — bootstraps a new
 	learning project (folder skeleton, progress file, the two skills
 	above) and runs the ongoing per-session loop in an existing one:
 	pick topic → teach → quiz → update progress.
 - `PROGRESS.md` — a live example of the progress-tracking file the
 	orchestrator creates and the other two skills update: one section
 	per topic, with last-worked date, confidence, and open gaps.
+
+Filenames carry each skill's current version number. Whenever a skill
+gets a substantive update, its file here is replaced (old version
+removed) and the corresponding entry below is added — see "Changelog".
+
+</details>
+
+<details>
+  <summary>Changelog</summary>
+
+One shared, human-readable history across all three skills, newest
+entry first per skill. Each skill also keeps this same history in its
+own SKILL.md frontmatter/changelog section; this section exists so the
+three don't have to be read side by side to see what changed when.
+
+### `interactive-mc-quiz`
+- **2.4** — Added the standing rule to also append every version
+	bump's changelog line here, so there's one shared changelog across
+	all three skills instead of three separate internal ones.
+- **2.3** — Added a "hide-until-ready" requirement for the live widget:
+	question blocks start hidden behind a loading bar in the raw HTML,
+	and only the post-stream script reveals them — fixes lost clicks
+	from answering while the widget was still streaming in.
+- **2.2** — Added live in-chat delivery: the same verified questions
+	are now also rendered as an auto-scoring `show_widget` widget that
+	reports the score into the chat via `sendPrompt` on submit, instead
+	of requiring the user to type it back.
+- **2.1** — Pointed "regular check" at the concrete `PROGRESS.md` file
+	and at the new `learning-project-orchestrator` skill.
+- **2.0** — Renamed from `interaktives-mc-quiz`; full file translated
+	to English; filename prefix changed from `Quizz –` to `Quiz –`.
+- **1.3** — Template embedded directly in the SKILL.md (no external
+	`assets/` file); dropped folder-level versioning.
+- **1.2** — Retroactive version-number correction to reflect this
+	skill's actual revision history.
+- **1.1** — First versioned release (file-pipeline workflow, format
+	spec with question-block coloring).
+
+### `heuristic-teaching-dialogue-aviva`
+- **2.2** — Added the standing rule to also append every version
+	bump's changelog line here.
+- **2.1** — Pointed session close at the concrete `PROGRESS.md` file
+	and at the new `learning-project-orchestrator` skill.
+- **2.0** — Renamed from `sokratische-lehre`; restructured around the
+	AVIVA model's five phases (added Arrival, explicit Inform-as-impulse
+	step); full file translated to English.
+- **1.0** — Initial version (as `sokratische-lehre`).
+
+### `learning-project-orchestrator`
+- **1.1** — Added the "Changelog README" project-wide convention
+	described above.
+- **1.0** — Initial version. Formalized the project's informal
+	"pick topic → teach → quiz → note progress" loop into a concrete
+	skill with a real `PROGRESS.md` artifact.
 
 </details>
 

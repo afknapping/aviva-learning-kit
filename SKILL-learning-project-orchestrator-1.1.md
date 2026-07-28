@@ -1,7 +1,7 @@
 ---
 name: learning-project-orchestrator
 description: Bootstraps a new AVIVA-based learning project (folder skeleton, progress file, teaching/quiz skills) and runs the ongoing session loop in an existing one — deciding the next topic, handing off to `heuristic-teaching-dialogue-aviva` and `interactive-mc-quiz`, and updating the progress file. Use whenever the user wants to set up a new learning project from scratch, or wants a full learning session run end to end ("what's next", "let's continue learning", "run my session") rather than just teaching or just quizzing one thing.
-version: 1.0
+version: 1.1
 ---
 
 # Learning Project Orchestrator
@@ -89,6 +89,15 @@ These apply across all three skills in this project, not just this one.
 	match (`SKILL-<name>-<new-version>.md`, via `mv`), and gets pushed
 	live via `save_skill` (`overwrite: true`). The `TEACHING SKILLS/`
 	folder itself never carries a version number.
+- **Changelog README.** Every one of those version bumps also gets a
+	one-line entry appended to the "Changelog" section of
+	`aviva-learning-kit/README.md` (project root) — grouped under that
+	skill's name, newest entry on top, matching the wording of the
+	entry already added to the skill's own internal changelog. This
+	keeps one shared, human-readable history across all three skills in
+	one place, instead of three separate internal changelogs nobody
+	reads side by side. Do this every time, immediately after the
+	skill-versioning step above — not just when explicitly asked.
 - **Language.** Skill documentation is in English. The actual teaching
 	dialogue, quiz content, and `PROGRESS.md` entries follow the
 	language of the study material — currently German for this
@@ -113,6 +122,11 @@ behavior change can skip a version bump at your discretion — when in
 doubt, bump anyway.
 
 **Changelog:**
+- 1.1: Added the "Changelog README" project-wide convention: every
+	version bump across any of the three skills now also gets a
+	one-line entry appended to `aviva-learning-kit/README.md`'s
+	Changelog section, so the three skills' internal changelogs are
+	mirrored into one shared, readable place.
 - 1.0: Initial version. Formalizes and supersedes the informal
 	"Standard-Loop pro Thema" and "Fortschritt festhalten" sections from
 	the project's original `PROJEKT-PROMPT.md` (now archived) — this

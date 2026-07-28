@@ -1,7 +1,7 @@
 ---
 name: interactive-mc-quiz
 description: Creates an interactive multiple-choice quiz for a knowledge check. Use this skill whenever the LERNEN project needs a test, quiz, exam, self-check, or knowledge probe on a topic just covered — even if "multiple choice" isn't said explicitly. Applies to any learning topic in this project, not just retraining prep.
-version: 2.1
+version: 2.4
 ---
 
 # Interactive Multiple-Choice Quiz
@@ -19,6 +19,82 @@ is served instantly from that file. Right after — still within the same
 response — the next test for the same topic is already generated in the
 background, verified, and saved as a new file, so something is ready
 again next time too.
+
+## Live delivery: auto-scored widget (in-chat) — default alongside the file
+
+A plain `.html` file in `QUIZZES/` has no live connection back to Claude —
+there is no tool that can read a static file preview's state, confirmed
+by testing `read_widget_context` against it (it returns "no widget
+context available"). So for in-chat delivery, render the *same*
+`QUESTIONS` data a second time as a live interactive widget (via the
+visualize tool's `show_widget`), which auto-reports the result the
+moment the user clicks submit — no manual "tell me your score" needed.
+
+This is not a second quiz to write — it's the same verified question
+list, formatted twice: once into the portable file (for `QUIZZES/`,
+offline use, sharing, taking outside the chat), once into the live
+widget (for in-chat use with automatic scoring).
+
+**How the auto-report works:** the widget's submit handler calls the
+visualize tool's global `sendPrompt(text)` function — this pushes a
+message into the chat exactly as if the user had typed it. The message
+must follow this exact, parseable format so it can be recognized
+reliably in conversation:
+
+```
+Quiz result — <Topic>: X of Y correct.
+```
+
+When a message in this format appears in the conversation, treat it
+exactly like the manual "test taken" signal described under
+"Archiving" below — no need for the user to additionally confirm it.
+
+**Widget requirements** (on top of the visualize skill's own design
+system rules — flat design, CSS variables, sentence case, no titles or
+prose inside the widget itself):
+- Start with a visually-hidden `<h2 class="sr-only">` summarizing the
+	quiz for screen readers.
+- One question block per item, radio-button options, bare `<input>` /
+	`<button>` tags (pre-styled by the host).
+- A single submit button whose label live-updates
+	`Submit (X of Y answered)` as with the file version.
+- On submit: color each question block via `var(--bg-success)` /
+	`var(--bg-danger)` and `var(--text-success)` / `var(--text-danger)`
+	for right/wrong (these are the CDS role tokens — not the file
+	template's own `--success-bg` custom variables, which only exist in
+	the standalone HTML file's own stylesheet), lock the radio inputs,
+	then call `sendPrompt` with the exact result string above.
+- No `sendPrompt` call before the user has actually submitted — only
+	fire it once, on the submit click.
+
+**Hide-until-ready (mandatory — prevents lost clicks while streaming):**
+`show_widget` content streams into the chat progressively, and the
+widget appears to fully re-render on each incoming chunk until the
+stream finishes and the `<script>` attaches — so any click registered
+before that point is silently lost. There is no way to fix this inside
+the widget's own JS timing; the fix is structural, in the markup order:
+- The question blocks (`#quiz-root` or equivalent) start with inline
+	`style="display: none;"` in the HTML itself — hidden from the very
+	first streamed chunk, not hidden later by a script.
+- A simple loading indicator (e.g. a thin animated bar, pure CSS
+	`@keyframes`, no library) is visible by default in its place, with
+	text like "Preparing quiz…".
+- The `<script>` block — which only ever executes after the full
+	widget has streamed in and attached — is what flips this: hide the
+	loading indicator, un-hide the quiz root, wire up the change/submit
+	listeners. All in the same script, so the questions only become
+	visible at the exact moment they also become clickable.
+- Net effect: the user only ever sees either "still preparing" or
+	"fully interactive" — never a half-rendered, clickable-but-about-to-
+	reset state in between.
+
+This was validated live in-project: a 2-question proof-of-concept
+widget correctly auto-reported `Quiz auto-report test: scored 2 out of
+2.` into the chat on submit, confirming `sendPrompt` is a reliable
+readback channel where `read_widget_context` against a plain file is
+not. The hide-until-ready pattern was added after the user reported
+losing answers by clicking mid-stream on the real 8-question Chapter 1
+quiz, and confirmed fixed on the next render.
 
 ## Folder structure (in the LERNEN project)
 - `QUIZZES/` — holds exactly one ready-to-take test file per topic.
@@ -61,10 +137,14 @@ again next time too.
 3. **File exists (the normal case):**
 	a. This file is the test to deliver — present it directly, without
 		modifying it first.
-	b. Briefly let the user know the file can be moved to `ARCHIVE` or
+	b. Also render the same verified `QUESTIONS` as a live auto-scoring
+		widget per "Live delivery" above, so the in-chat path doesn't
+		require a manual score report.
+	c. Briefly let the user know the file can be moved to `ARCHIVE` or
 		deleted themselves once done, if the test is taken outside the
-		chat (directly in the browser) (see "Archiving" below).
-	c. Immediately kick off step 5 (refill the pipeline), without
+		chat (directly in the browser) rather than via the live widget
+		(see "Archiving" below).
+	d. Immediately kick off step 5 (refill the pipeline), without
 		waiting for a signal from the user — the delivered file stays
 		untouched in `QUIZZES/` until it's demonstrably been taken (see
 		Archiving).
@@ -74,7 +154,8 @@ again next time too.
 		order across sub-topics.
 	b. Run it through verification (step 6) before delivering.
 	c. Render it as a new file per the naming convention in `QUIZZES/`
-		and deliver it.
+		and deliver it, plus the same questions as a live auto-scoring
+		widget per "Live delivery" above.
 	d. Immediately kick off step 5, so a pipeline now exists for this
 		topic going forward.
 5. **Refill the pipeline (after every test delivery):**
@@ -99,12 +180,14 @@ again next time too.
 
 - **Test taken in chat ("inline"):** As soon as the user signals in
 	conversation that a specific test is done — e.g. they state a
-	result, say "done", or ask for the next test on the same topic — the
-	file in question is moved from `QUIZZES/` to `ARCHIVE/` via `mv`
-	(never delete; see the project convention "delete means archive",
-	which also applies to Claude's own cleanup — never use `rm`).
-	Immediately after, move the successor file prepared in step 5 into
-	`QUIZZES/`, so a test is ready again right away.
+	result, say "done", ask for the next test on the same topic, or the
+	live widget auto-reports via the `Quiz result — <Topic>: X of Y
+	correct.` message described under "Live delivery" above — the file
+	in question is moved from `QUIZZES/` to `ARCHIVE/` via `mv` (never
+	delete; see the project convention "delete means archive", which
+	also applies to Claude's own cleanup — never use `rm`). Immediately
+	after, move the successor file prepared in step 5 into `QUIZZES/`,
+	so a test is ready again right away.
 - **Test taken outside the chat** (the user opens the HTML file
 	themselves in the browser without mentioning it in chat): Claude has
 	no way to detect this. The file stays put until the user moves it to
@@ -514,7 +597,7 @@ pipeline.
 
 ## Versioning
 This SKILL.md carries a `version` field in its frontmatter (currently
-2.1). The parent folder name `TEACHING SKILLS` deliberately carries no
+2.4). The parent folder name `TEACHING SKILLS` deliberately carries no
 version number — versioning is skill-level only (filename +
 frontmatter), never folder-level. A shared folder-level version number
 would have been misleading anyway: if one skill catches up to the
@@ -527,12 +610,45 @@ change — pure noise with no information content.
 	`mv`, don't keep the old version file).
 2. Update the live skill via `save_skill` (`overwrite: true`) in sync,
 	with the same version number.
+3. Append a one-line entry to the Changelog section of
+	`aviva-learning-kit/README.md` (project root), matching this
+	skill's own changelog entry below. This is the shared, cross-skill
+	changelog convention — see "Skill versioning" under
+	`learning-project-orchestrator`'s "Project-wide conventions" for the
+	full rule shared by all three skills in this project.
 
 The `TEACHING SKILLS/` folder stays untouched. Pure typo fixes with no
 behavior change can skip a version bump at your discretion — when in
 doubt, bump anyway.
 
 **Changelog:**
+- 2.4: Added the standing rule (step 3 above) to also append every
+	version bump's changelog line to `aviva-learning-kit/README.md`,
+	so there's one shared, human-readable changelog across all three
+	project skills instead of three separate internal ones nobody
+	reads together.
+- 2.3: Added the "Hide-until-ready" requirement for live widgets: the
+	question blocks now start `display: none` in the raw HTML (hidden
+	from the first streamed chunk) with a plain animated loading bar
+	shown in their place, and only the post-stream `<script>` swaps
+	visibility and wires up the listeners. Fixes a real bug the user
+	hit — clicking answers while the widget was still streaming in
+	silently lost them, because the widget appears to fully re-render on
+	each chunk until the script attaches. This is a markup-order fix,
+	not a JS-timing fix, since nothing inside the widget can control the
+	host's streaming/re-render behavior.
+- 2.2: Added live in-chat delivery alongside the file: the same
+	verified `QUESTIONS` data is now also rendered as a `show_widget`
+	interactive widget whose submit handler calls `sendPrompt` with a
+	fixed-format result string (`Quiz result — <Topic>: X of Y
+	correct.`), so scores auto-report into the conversation instead of
+	requiring the user to type them back. Confirmed via live test that
+	`read_widget_context` cannot read a plain file-preview panel's state
+	(no live connection exists there), but `sendPrompt` reliably pushes
+	widget state into the chat. The file in `QUIZZES/` is unchanged in
+	purpose — still the portable/offline/shareable copy — the widget is
+	additive for the in-chat case. The auto-report message counts as a
+	completion signal under "Archiving," same as a manually typed score.
 - 2.1: "Regular check" now points to the concrete `PROGRESS.md` file
 	(project root) instead of vague "progress notes" language. Added a
 	pointer to the new `learning-project-orchestrator` skill, which owns

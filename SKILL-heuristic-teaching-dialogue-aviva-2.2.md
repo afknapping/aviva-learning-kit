@@ -1,7 +1,7 @@
 ---
 name: heuristic-teaching-dialogue-aviva
 description: Delivers new material through heuristic, Socratic-style dialogue structured by the AVIVA method — questions instead of straight explanation, guiding the learner toward their own insight. Use this skill whenever a new topic, formula, rule, or concept needs to be introduced in the LERNEN project — e.g. on "explain this to me", "teach me X", "teaching mode", "walk me through this". Not for pure knowledge checks — use `interactive-mc-quiz` for that.
-version: 2.1
+version: 2.2
 ---
 
 # Heuristic Teaching Dialogue (AVIVA Method)
@@ -87,12 +87,22 @@ folder-level.
 	`mv`, don't keep the old version file).
 2. Update the live skill via `save_skill` (`overwrite: true`) in sync,
 	with the same version number.
+3. Append a one-line entry to the Changelog section of
+	`aviva-learning-kit/README.md` (project root), matching this
+	skill's own changelog entry below. See "Skill versioning" under
+	`learning-project-orchestrator`'s "Project-wide conventions" for
+	the full rule shared by all three skills in this project.
 
 The `TEACHING SKILLS/` folder stays untouched. Pure typo fixes with no
 behavior change can skip a version bump at your discretion — when in
 doubt, bump anyway.
 
 **Changelog:**
+- 2.2: Added the standing rule (step 3 above) to also append every
+	version bump's changelog line to `aviva-learning-kit/README.md`,
+	so there's one shared, human-readable changelog across all three
+	project skills instead of three separate internal ones nobody
+	reads together.
 - 2.1: Session close now points to the concrete `PROGRESS.md` file
 	(project root) instead of vague "progress notes" language. Added a
 	pointer to the new `learning-project-orchestrator` skill, which owns
