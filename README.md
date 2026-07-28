@@ -81,6 +81,8 @@ three don't have to be read side by side to see what changed when.
 
 </details>
 
+[Download ZIP](https://github.com/afknapping/aviva-learning-kit/archive/refs/heads/main.zip)
+
 ## Install (once per Claude account)
 
 Skills live per Claude account, not per repo — cloning or downloading
