@@ -1,7 +1,7 @@
 ---
 name: interactive-mc-quiz
 description: Creates an interactive multiple-choice quiz for a knowledge check. Use this skill whenever the LERNEN project needs a test, quiz, exam, self-check, or knowledge probe on a topic just covered — even if "multiple choice" isn't said explicitly. Applies to any learning topic in this project, not just retraining prep.
-version: 2.4
+version: 2.6
 ---
 
 # Interactive Multiple-Choice Quiz
@@ -34,6 +34,17 @@ This is not a second quiz to write — it's the same verified question
 list, formatted twice: once into the portable file (for `QUIZZES/`,
 offline use, sharing, taking outside the chat), once into the live
 widget (for in-chat use with automatic scoring).
+
+**Widget is the delivery; the file is silent backup.** Render the
+widget immediately — don't wait on the file, don't ask whether the
+user wants to see it, and don't call `present_files` on the quiz file
+by default. The file still gets saved into `QUIZZES/` (it's the
+portable/offline copy and the archiving anchor), but surfacing it via
+`present_files` every time is redundant noise once a widget already
+exists — only do that if the user specifically asks to see the file,
+open it outside the chat, or share/download it. Anticipate this
+ahead of time rather than blocking on a question: if a quiz is being
+delivered at all, default straight to rendering the widget.
 
 **How the auto-report works:** the widget's submit handler calls the
 visualize tool's global `sendPrompt(text)` function — this pushes a
@@ -135,16 +146,15 @@ quiz, and confirmed fixed on the next render.
 2. **Check `QUIZZES/`.** Is there already a file there whose name starts
 	with `Quiz – <Topic> ` (or the legacy `Quizz – <Topic> `)?
 3. **File exists (the normal case):**
-	a. This file is the test to deliver — present it directly, without
-		modifying it first.
-	b. Also render the same verified `QUESTIONS` as a live auto-scoring
-		widget per "Live delivery" above, so the in-chat path doesn't
-		require a manual score report.
-	c. Briefly let the user know the file can be moved to `ARCHIVE` or
-		deleted themselves once done, if the test is taken outside the
-		chat (directly in the browser) rather than via the live widget
-		(see "Archiving" below).
-	d. Immediately kick off step 5 (refill the pipeline), without
+	a. Render the same verified `QUESTIONS` from this file as a live
+		auto-scoring widget per "Live delivery" above — this is the
+		delivery. Don't separately present the file itself (see "Widget
+		is the delivery" above).
+	b. Briefly mention the file exists in `QUIZZES/` as a backup/offline
+		copy, without calling `present_files` on it, if the test is taken
+		outside the chat (directly in the browser) rather than via the
+		live widget (see "Archiving" below).
+	c. Immediately kick off step 5 (refill the pipeline), without
 		waiting for a signal from the user — the delivered file stays
 		untouched in `QUIZZES/` until it's demonstrably been taken (see
 		Archiving).
@@ -154,8 +164,8 @@ quiz, and confirmed fixed on the next render.
 		order across sub-topics.
 	b. Run it through verification (step 6) before delivering.
 	c. Render it as a new file per the naming convention in `QUIZZES/`
-		and deliver it, plus the same questions as a live auto-scoring
-		widget per "Live delivery" above.
+		(silent backup save, no `present_files` call), then deliver via
+		the live auto-scoring widget per "Live delivery" above.
 	d. Immediately kick off step 5, so a pipeline now exists for this
 		topic going forward.
 5. **Refill the pipeline (after every test delivery):**
@@ -232,6 +242,11 @@ e. Additionally check the distribution of `correct` indices across the
 	and reshuffle the options of affected questions if skewed (change
 	option order, adjust the index accordingly) — question text and
 	content stay unchanged.
+f. Additionally check each question against "No structural tells"
+	above — flag any question where the correct option is noticeably
+	longer, more detailed, or structurally different from the three
+	distractors, and rewrite the distractors (or trim the correct
+	option) so length/structure give no hint.
 
 ### Distribution of the correct answer
 - Distribute the position of the correct answer (index 0–3 among the
@@ -247,6 +262,14 @@ e. Additionally check the distribution of `correct` indices across the
 ## Format specification (mandatory)
 - One question per block, 4 answer options as radio buttons, exactly
 	one correct answer.
+- **No structural tells.** All 4 options for a question must be
+	similar in length and sentence structure — the correct answer must
+	not be identifiable simply because it's noticeably longer, more
+	detailed, more specific, or grammatically different from the three
+	distractors. If a correct answer naturally wants to be longer/more
+	precise, either trim it or lengthen/sharpen the distractors to
+	match, so length and structure carry no signal at all. This is
+	checked again during verification (see below).
 - One button at the end of all questions. Its text live-shows answering
 	progress: `Submit (X of Y answered)`, updating on every selection.
 - On clicking the button:
@@ -597,7 +620,7 @@ pipeline.
 
 ## Versioning
 This SKILL.md carries a `version` field in its frontmatter (currently
-2.4). The parent folder name `TEACHING SKILLS` deliberately carries no
+2.6). The parent folder name `TEACHING SKILLS` deliberately carries no
 version number — versioning is skill-level only (filename +
 frontmatter), never folder-level. A shared folder-level version number
 would have been misleading anyway: if one skill catches up to the
@@ -622,6 +645,22 @@ behavior change can skip a version bump at your discretion — when in
 doubt, bump anyway.
 
 **Changelog:**
+- 2.6: Added a "No structural tells" rule to the format spec and
+	verification checklist: all 4 options must be similar in length and
+	sentence structure, so the correct answer can't be spotted just by
+	being longer, more detailed, or grammatically different from the
+	distractors. Direct user feedback: "the correct answer is too easy
+	to spot. make sure wrong choices have similar length and sentence
+	structure."
+- 2.5: Widget is now the default delivery, full stop — stopped calling
+	`present_files` on the quiz file whenever a widget is also rendered
+	(redundant, and the user found it blocking/noisy), and stopped
+	waiting on any confirmation before rendering the widget. The file
+	in `QUIZZES/` is still saved every time as a silent backup/offline
+	copy, just not surfaced unless asked for. Prompted directly by user
+	feedback: "i don't need to see the file if you make a widget...
+	i do not want to be blocked. anticipate where you can and
+	prioritise widget – file is just backup."
 - 2.4: Added the standing rule (step 3 above) to also append every
 	version bump's changelog line to `aviva-learning-kit/README.md`,
 	so there's one shared, human-readable changelog across all three

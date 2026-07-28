@@ -9,12 +9,12 @@ tracks progress over time.
 <details>
   <summary>What's in this folder</summary>
 
-- `SKILL-heuristic-teaching-dialogue-aviva-2.2.md` — teaches new
+- `SKILL-heuristic-teaching-dialogue-aviva-2.4.md` — teaches new
 	material through guided questions rather than explanation, structured
 	around the AVIVA model's five phases (Arrival, Activate prior
 	knowledge, Inform, Process, Evaluate).
-- `SKILL-interactive-mc-quiz-2.4.md` — generates a multiple-choice quiz for any topic just covered via a live in-chat auto-scoring widget, plus a pipeline so a fresh test is always ready to go;
-- `SKILL-learning-project-orchestrator-1.1.md` — bootstraps a new
+- `SKILL-interactive-mc-quiz-2.6.md` — generates a multiple-choice quiz for any topic just covered via a live in-chat auto-scoring widget, plus a pipeline so a fresh test is always ready to go;
+- `SKILL-learning-project-orchestrator-1.3.md` — bootstraps a new
 	learning project (folder skeleton, progress file, the two skills
 	above) and runs the ongoing per-session loop in an existing one:
 	pick topic → teach → quiz → update progress.
@@ -38,6 +38,15 @@ three don't have to be read side by side to see what changed when.
 
 
 ### `interactive-mc-quiz`
+- **2.6** — Added a "no structural tells" rule: all 4 options per
+	question must be similar in length and sentence structure, so the
+	correct answer can't be spotted just by being longer or more
+	detailed than the distractors.
+- **2.5** — Widget is now the default delivery, full stop — stopped
+	surfacing the quiz file via `present_files` whenever a widget is
+	also rendered, and stopped waiting on confirmation before rendering
+	it. The file is still saved to `QUIZZES/` every time as a silent
+	backup.
 - **2.4** — Added the standing rule to also append every version
 	bump's changelog line here, so there's one shared changelog across
 	all three skills instead of three separate internal ones.
@@ -61,6 +70,12 @@ three don't have to be read side by side to see what changed when.
 	spec with question-block coloring).
 
 ### `heuristic-teaching-dialogue-aviva`
+- **2.4** — Added a mandatory rule: teaching chunks built on a
+	specific Bible passage must quote the actual verse text alongside
+	the chunk, not just paraphrase or cite the reference.
+- **2.3** — Added a note to persist uploaded source material into
+	`MATERIALS/` (split per chapter/section) before teaching from it,
+	instead of teaching straight from the temporary upload.
 - **2.2** — Added the standing rule to also append every version
 	bump's changelog line here.
 - **2.1** — Pointed session close at the concrete `PROGRESS.md` file
@@ -71,6 +86,19 @@ three don't have to be read side by side to see what changed when.
 - **1.0** — Initial version (as `sokratische-lehre`).
 
 ### `learning-project-orchestrator`
+- **1.3** — Added the "Anticipatory readiness" convention: the next
+	queued quiz and the next lesson's groundwork (topic decided,
+	material persisted, opening move drafted) stay pre-staged so the
+	recommended path never waits on live generation — quiz refills can
+	be delegated to a background subagent since they're self-contained,
+	while a lesson's actual dialogue stays adaptive past its opening
+	move.
+- **1.2** — Added the "Source material persistence" project-wide
+	convention and `MATERIALS/` to the folder skeleton: uploaded study
+	material gets split into one file per chapter/section and saved
+	into the project instead of relying on the temporary uploads
+	folder, with a check for embedded illustrations before converting
+	to plain text.
 - **1.1** — Added the "Changelog README" project-wide convention
 	described above.
 - **1.0** — Initial version. Formalized the project's informal

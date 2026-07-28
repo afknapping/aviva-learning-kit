@@ -1,7 +1,7 @@
 ---
 name: learning-project-orchestrator
 description: Bootstraps a new AVIVA-based learning project (folder skeleton, progress file, teaching/quiz skills) and runs the ongoing session loop in an existing one — deciding the next topic, handing off to `heuristic-teaching-dialogue-aviva` and `interactive-mc-quiz`, and updating the progress file. Use whenever the user wants to set up a new learning project from scratch, or wants a full learning session run end to end ("what's next", "let's continue learning", "run my session") rather than just teaching or just quizzing one thing.
-version: 1.1
+version: 1.2
 ---
 
 # Learning Project Orchestrator
@@ -28,6 +28,8 @@ Trigger: the user wants to start a new project structured like this one
 	- `QUIZZES/` — one ready-to-take test file per topic.
 	- `ARCHIVE/` — finished/inactive files. Never a trash can — see
 		"Delete means archive" below.
+	- `MATERIALS/` — persisted, chapter-split source study material. See
+		"Source material persistence" below.
 	- `PROGRESS.md` — the project's single progress-tracking file.
 3. Install the two companion skills into `TEACHING SKILLS/`:
 	- `heuristic-teaching-dialogue-aviva`
@@ -102,6 +104,25 @@ These apply across all three skills in this project, not just this one.
 	dialogue, quiz content, and `PROGRESS.md` entries follow the
 	language of the study material — currently German for this
 	project's retraining content.
+- **Source material persistence.** Uploaded study material (PDFs, long
+	documents) lives only in the temporary uploads folder by default —
+	it can be gone by the next session. The first time a new topic's
+	source material is introduced (typically during
+	`heuristic-teaching-dialogue-aviva`'s session opening), persist it
+	into `MATERIALS/` in the project root, one file per chapter/section
+	of the source (not one giant file): plain-text `.md`, preserving
+	headings, key verses/quotes, and all references, named
+	`<Chapter/Section Title>.md` in the language of the study material.
+	Splitting keeps each file cheap to read later and mirrors the
+	one-file-per-topic pattern already used by `QUIZZES/`.
+	Before converting, check the source for embedded illustrations
+	(e.g. `pdfimages -list` on a PDF) — plain-text markdown silently
+	drops anything that isn't extractable text. If the source has real
+	diagrams, scanned figures, or tables-as-images, keep the original
+	file as the source of truth alongside the markdown (or extract and
+	link the images separately) rather than relying on text extraction
+	alone. Do this once per topic, not per session — check `MATERIALS/`
+	for an existing split before re-deriving it.
 
 ## Versioning
 This SKILL.md carries a `version` field in its frontmatter. The parent
@@ -122,6 +143,15 @@ behavior change can skip a version bump at your discretion — when in
 doubt, bump anyway.
 
 **Changelog:**
+- 1.2: Added the "Source material persistence" project-wide
+	convention and `MATERIALS/` to the folder skeleton: uploaded study
+	material gets split into one file per chapter/section and saved
+	into the project (not left dependent on the temporary uploads
+	folder), with an explicit check for embedded illustrations before
+	relying on plain-text extraction. Prompted by splitting the
+	"Strategies For Spiritual Harvest" course PDF into per-chapter
+	files after realizing the original upload wasn't persisted anywhere
+	in the project.
 - 1.1: Added the "Changelog README" project-wide convention: every
 	version bump across any of the three skills now also gets a
 	one-line entry appended to `aviva-learning-kit/README.md`'s

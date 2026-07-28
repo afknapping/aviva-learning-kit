@@ -1,7 +1,7 @@
 ---
 name: heuristic-teaching-dialogue-aviva
 description: Delivers new material through heuristic, Socratic-style dialogue structured by the AVIVA method — questions instead of straight explanation, guiding the learner toward their own insight. Use this skill whenever a new topic, formula, rule, or concept needs to be introduced in the LERNEN project — e.g. on "explain this to me", "teach me X", "teaching mode", "walk me through this". Not for pure knowledge checks — use `interactive-mc-quiz` for that.
-version: 2.2
+version: 2.4
 ---
 
 # Heuristic Teaching Dialogue (AVIVA Method)
@@ -19,6 +19,16 @@ Before the first concept of a session, briefly frame it: name the topic,
 connect it to the bigger picture the learner is working toward, and set a
 short expectation for scope ("just this piece today"). Keep it to a
 sentence or two — this is orientation, not a lecture.
+
+**New topic from uploaded material:** if the topic starts from an
+uploaded document (PDF, long text) rather than something already in
+`MATERIALS/`, persist it before or during this Arrival step — split it
+into one file per chapter/section in `MATERIALS/` (project root),
+rather than teaching straight from the ephemeral upload. See "Source
+material persistence" under `learning-project-orchestrator`'s
+"Project-wide conventions" for the full convention (naming, image
+check, one-time-per-topic). Check `MATERIALS/` first — if the split
+already exists from a prior session, don't redo it.
 
 ## Flow per concept
 
@@ -50,6 +60,17 @@ sentence or two — this is orientation, not a lecture.
 8. **Evaluate — offer a branch point.** After a completed sub-concept,
 	briefly summarize what's solid and explicitly ask whether to go
 	deeper, move on, or stop — don't just keep talking.
+
+## Scripture rendering (mandatory, for Bible-based material)
+When a teaching chunk is built on a specific Bible passage from the
+source material, render the actual verse text alongside the chunk —
+quoted (e.g. as a blockquote), not just paraphrased or cited by
+reference alone. A learner should be able to see the primary source
+directly in the dialogue, not just Claude's summary of it. This
+matches the format already used in `MATERIALS/` (quoted verses with
+the reference in parentheses). Paraphrase is fine for framing or
+transition, but the verse itself belongs in the message whenever it's
+the basis for the current step.
 
 ## Session close: Evaluate
 A short, honest balance: what's solid, where the mistakes were and
@@ -98,6 +119,18 @@ behavior change can skip a version bump at your discretion — when in
 doubt, bump anyway.
 
 **Changelog:**
+- 2.4: Added a mandatory "Scripture rendering" rule: teaching chunks
+	built on a specific Bible passage must quote the actual verse text
+	alongside the chunk, not just paraphrase or cite the reference.
+	Prompted by the user noticing a teaching message referenced II
+	Kings 6:15-17 (Gehazi) without quoting it.
+- 2.3: Added a note under "Session opening: Arrival" to persist
+	uploaded source material into `MATERIALS/` (split per chapter/
+	section) before teaching from it, pointing to the new "Source
+	material persistence" convention owned by
+	`learning-project-orchestrator`. Prompted by realizing an uploaded
+	course PDF wasn't saved anywhere in the project and could have been
+	lost between sessions.
 - 2.2: Added the standing rule (step 3 above) to also append every
 	version bump's changelog line to `aviva-learning-kit/README.md`,
 	so there's one shared, human-readable changelog across all three
