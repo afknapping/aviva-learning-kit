@@ -124,6 +124,12 @@ If it doesn't trigger on its own, name it directly: "use
 
 ## Sources
 
+- [Sokratische Methode – Wikipedia](https://de.wikipedia.org/wiki/Sokratische_Methode)
+- [Sokratisches Gespräch – Wikipedia](https://de.wikipedia.org/wiki/Sokratisches_Gespr%C3%A4ch)
+- [Sokratisches Gespräch – Methodenkartei, Uni Oldenburg](https://www.methodenkartei.uni-oldenburg.de/methode/sokratisches-gespraech/)
+- [Socratic questioning – Wikipedia](https://en.wikipedia.org/wiki/Socratic_questioning)
+- [The Role of Teacher Questions and the Socratic Method (ERIC)](https://files.eric.ed.gov/fulltext/EJ1158946.pdf)
+- [Socratic Teaching Techniques for Effective Learning – Structural Learning](https://www.structural-learning.com/post/socratic-teaching-techniques-for-effective-learning)
 - Städeli, C., Grassi, A., Rhiner, K., Obrist, W. (2010). *Kompetenzorientiert
 	unterrichten: das AVIVA-Modell.* hep Verlag, Bern. —
 	[hep-verlag.ch/das-aviva-modell](https://www.hep-verlag.ch/das-aviva-modell)
