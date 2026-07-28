@@ -6,7 +6,8 @@ structured by the AVIVA didactic model, an interactive multiple-choice
 quiz generator, and an orchestrator that ties the two together and
 tracks progress over time.
 
-## What's in this folder
+<details>
+  <summary>What's in this folder</summary>
 
 - `SKILL-heuristic-teaching-dialogue-aviva-2.1.md` — teaches new
 	material through guided questions rather than explanation, structured
@@ -23,13 +24,38 @@ tracks progress over time.
 	orchestrator creates and the other two skills update: one section
 	per topic, with last-worked date, confidence, and open gaps.
 
-## Use
+</details>
 
-To set up a new learning project with this kit, point
-`learning-project-orchestrator`'s "Bootstrap" section at the target
-folder — it creates the `TEACHING SKILLS/`, `QUIZZES/`, `ARCHIVE/`
-structure, installs the two content skills, and creates a fresh
-`PROGRESS.md` from the template in that same file.
+## Install (once per Claude account)
+
+Skills live per Claude account, not per repo — cloning or downloading
+this folder doesn't make them available on its own. Add them once:
+
+1. Open a Cowork/Claude chat and attach the three `SKILL-*.md` files
+	(or connect this whole folder), then ask Claude to save them as
+	skills — it has a `save_skill` tool for exactly this.
+2. Alternatively, zip each skill's file into a `.skill` archive and
+	share it in chat — Cowork renders a one-click "Save skill" install
+	button for files of that type.
+
+Do this once; after that, all three skills are available in every
+project on that account, the same as any other Claude skill.
+
+## Use (per new learning project)
+
+Once the three skills are installed on your account:
+
+1. Connect or select the folder you want as the new project's root.
+2. In that project's chat, just say what you want to learn — e.g. "set
+	up a new learning project here for Spanish vocabulary."
+3. `learning-project-orchestrator`'s description matches that request
+	and triggers automatically. It creates the `TEACHING SKILLS/`,
+	`QUIZZES/`, `ARCHIVE/` structure, writes a fresh `PROGRESS.md` from
+	its template, and drops project-local copies of the two content
+	skills into `TEACHING SKILLS/`.
+
+If it doesn't trigger on its own, name it directly: "use
+`learning-project-orchestrator` to set this up."
 
 ## Sources
 
