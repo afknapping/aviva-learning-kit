@@ -36,6 +36,7 @@ entry first per skill. Each skill also keeps this same history in its
 own SKILL.md frontmatter/changelog section; this section exists so the
 three don't have to be read side by side to see what changed when.
 
+
 ### `interactive-mc-quiz`
 - **2.4** — Added the standing rule to also append every version
 	bump's changelog line here, so there's one shared changelog across
@@ -79,6 +80,16 @@ three don't have to be read side by side to see what changed when.
 </details>
 
 [Download ZIP](https://github.com/afknapping/aviva-learning-kit/archive/refs/heads/main.zip)
+
+## How it works
+
+- you give it a topic or upload materials
+- it asses your current learning status with the material
+- it guides you through the material with a step-by-step conversation
+- it creates quizzes for assessment and repetition of material
+- it keeps track and picks up where you left off
+- you stay in control of pacing
+
 
 ## Install (once per Claude account)
 
