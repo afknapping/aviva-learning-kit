@@ -13,10 +13,7 @@ tracks progress over time.
 	material through guided questions rather than explanation, structured
 	around the AVIVA model's five phases (Arrival, Activate prior
 	knowledge, Inform, Process, Evaluate).
-- `SKILL-interactive-mc-quiz-2.4.md` — generates a self-contained,
-	single-file HTML multiple-choice quiz for any topic just covered,
-	with a file pipeline so a fresh test is always ready to go, plus a
-	live in-chat auto-scoring widget alongside it.
+- `SKILL-interactive-mc-quiz-2.4.md` — generates a multiple-choice quiz for any topic just covered via a live in-chat auto-scoring widget, plus a pipeline so a fresh test is always ready to go;
 - `SKILL-learning-project-orchestrator-1.1.md` — bootstraps a new
 	learning project (folder skeleton, progress file, the two skills
 	above) and runs the ongoing per-session loop in an existing one:
