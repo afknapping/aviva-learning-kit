@@ -1,7 +1,7 @@
 ---
 name: learning-project-orchestrator
 description: Bootstraps a new AVIVA-based learning project (folder skeleton, progress file, teaching/quiz skills) and runs the ongoing session loop in an existing one — deciding the next topic, handing off to `heuristic-teaching-dialogue-aviva` and `interactive-mc-quiz`, and updating the progress file. Use whenever the user wants to set up a new learning project from scratch, or wants a full learning session run end to end ("what's next", "let's continue learning", "run my session") rather than just teaching or just quizzing one thing.
-version: 1.5
+version: 1.6
 ---
 
 # Learning Project Orchestrator
@@ -28,8 +28,9 @@ Trigger: the user wants to start a new project structured like this one
 	- `QUIZZES/` — one ready-to-take test file per topic.
 	- `ARCHIVE/` — finished/inactive files. Never a trash can — see
 		"Delete means archive" below.
-	- `MATERIALS/` — persisted, chapter-split source study material. See
-		"Source material persistence" below.
+	- `MATERIALS/` — persisted source study material, one subfolder per
+		topic, chapter/module-split inside each. See "Source material
+		persistence" below.
 	- `PROGRESS.md` — the project's single progress-tracking file.
 3. Install the two companion skills into `TEACHING SKILLS/`:
 	- `heuristic-teaching-dialogue-aviva`
@@ -125,20 +126,32 @@ These apply across all three skills in this project, not just this one.
 	it can be gone by the next session. The first time a new topic's
 	source material is introduced (typically during
 	`heuristic-teaching-dialogue-aviva`'s session opening), persist it
-	into `MATERIALS/` in the project root, one file per chapter/section
-	of the source (not one giant file): plain-text `.md`, preserving
-	headings, key verses/quotes, and all references, named
-	`<Chapter/Section Title>.md` in the language of the study material.
-	Splitting keeps each file cheap to read later and mirrors the
-	one-file-per-topic pattern already used by `QUIZZES/`.
+	into `MATERIALS/<Topic>/` in the project root — one subfolder per
+	topic, one file per chapter/section of that topic's source inside
+	it (not one giant file, and not flat directly in `MATERIALS/`):
+	plain-text `.md`, preserving headings, key verses/quotes, and all
+	references, named `<Chapter/Section Title>.md` in the language of
+	the study material. `<Topic>` is the same short, plain-text name
+	used in `QUIZZES/`'s `Quiz – <Topic> ...` filenames and in
+	`PROGRESS.md`'s section headings — drop any parenthetical subtitle
+	(e.g. `Strategies For Spiritual Harvest`, not `Strategies For
+	Spiritual Harvest (Harvestime International Institute)`) so the
+	exact same string is reusable everywhere without variants. Splitting
+	into per-topic subfolders keeps topics from piling up flat as they
+	accumulate, and mirrors the one-file-per-chapter pattern already
+	used within each topic. `interactive-mc-quiz` also stores its
+	per-chapter/module quiz-data banks as a sibling `quiz-data/`
+	subfolder inside each topic's `MATERIALS/<Topic>/` — see that
+	skill for the banking mechanism itself; this convention only owns
+	the shape of `MATERIALS/`.
 	Before converting, check the source for embedded illustrations
 	(e.g. `pdfimages -list` on a PDF) — plain-text markdown silently
 	drops anything that isn't extractable text. If the source has real
 	diagrams, scanned figures, or tables-as-images, keep the original
 	file as the source of truth alongside the markdown (or extract and
 	link the images separately) rather than relying on text extraction
-	alone. Do this once per topic, not per session — check `MATERIALS/`
-	for an existing split before re-deriving it.
+	alone. Do this once per topic, not per session — check
+	`MATERIALS/<Topic>/` for an existing split before re-deriving it.
 - **Anticipatory readiness ("the recommended path never waits").** As a
 	learner, taking the recommended next step — the next queued quiz, or
 	the next lesson — should never require waiting on live generation.
@@ -160,8 +173,8 @@ These apply across all three skills in this project, not just this one.
 		already done ahead of the ask: (a) the next topic is already
 		decided and named in `PROGRESS.md`'s "Open gaps" rather than
 		picked live when the user asks "what's next"; (b) its source
-		material is already split into `MATERIALS/` per "Source material
-		persistence" above, done proactively rather than deferred until
+		material is already split into `MATERIALS/<Topic>/` per "Source
+		material persistence" above, done proactively rather than deferred until
 		the topic actually starts; (c)
 		`heuristic-teaching-dialogue-aviva`'s opening move — a brief
 		Arrival framing plus the first Activate-prior-knowledge question —
@@ -235,6 +248,17 @@ behavior change can skip a version bump at your discretion — when in
 doubt, bump anyway.
 
 **Changelog:**
+- 1.6: `MATERIALS/` now holds one subfolder per topic (chapter/module
+	files split inside each), instead of every topic's chapter files
+	sitting flat together in one folder. `<Topic>` subfolder names match
+	the plain-text topic name already used in `QUIZZES/`'s `Quiz –
+	<Topic> ...` filenames and `PROGRESS.md` headings, dropping any
+	parenthetical subtitle. Existing project material and `PROGRESS.md`
+	paths migrated to the new layout. Also cross-references
+	`interactive-mc-quiz`'s new per-chapter/module quiz-data banks,
+	which live as a sibling `quiz-data/` folder inside each topic's
+	`MATERIALS/<Topic>/`. Prompted directly by user feedback: "materials
+	should have subfolders per topic."
 - 1.5: Added the "Demo-safe PROGRESS.md export" convention:
 	`aviva-learning-kit/PROGRESS.md` is a format demo only and must
 	never receive a wholesale copy of the project-root `PROGRESS.md` —

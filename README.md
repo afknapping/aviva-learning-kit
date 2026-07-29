@@ -14,7 +14,7 @@ tracks progress over time.
 	around the AVIVA model's five phases (Arrival, Activate prior
 	knowledge, Inform, Process, Evaluate).
 - `SKILL-interactive-mc-quiz-2.6.md` — generates a multiple-choice quiz for any topic just covered via a live in-chat auto-scoring widget, plus a pipeline so a fresh test is always ready to go;
-- `SKILL-learning-project-orchestrator-1.5.md` — bootstraps a new
+- `SKILL-learning-project-orchestrator-1.6.md` — bootstraps a new
 	learning project (folder skeleton, progress file, the two skills
 	above) and runs the ongoing per-session loop in an existing one:
 	pick topic → teach → quiz → update progress.
@@ -86,6 +86,12 @@ three don't have to be read side by side to see what changed when.
 - **1.0** — Initial version (as `sokratische-lehre`).
 
 ### `learning-project-orchestrator`
+- **1.6** — `MATERIALS/` now holds one subfolder per topic instead of
+	every topic's chapter/module files sitting flat together. Subfolder
+	names match the plain-text topic name already used in `Quiz –
+	<Topic> ...` filenames and `PROGRESS.md` headings. Cross-references
+	`interactive-mc-quiz`'s new per-chapter/module quiz-data banks,
+	which live in a sibling `quiz-data/` folder per topic.
 - **1.5** — Added the "Demo-safe PROGRESS.md export" convention:
 	`aviva-learning-kit/PROGRESS.md` is a format demo only (currently
 	just the `Mathematik` example) and never receives a wholesale copy
