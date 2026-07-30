@@ -1,7 +1,7 @@
 ---
 name: interactive-mc-quiz
 description: Creates an interactive multiple-choice quiz for a knowledge check. Use this skill whenever the LERNEN project needs a test, quiz, exam, self-check, or knowledge probe on a topic just covered — even if "multiple choice" isn't said explicitly. Applies to any learning topic in this project, not just retraining prep.
-version: 2.6
+version: 2.7
 ---
 
 # Interactive Multiple-Choice Quiz
@@ -11,14 +11,21 @@ version: 2.6
 	just discussed.
 - The user says "quiz me", "multiple choice", "grade me", or similar.
 
-## Core principle: file pipeline instead of live generation
+## Core principle: verified quiz-data banks, combined on demand
 Waiting for a fresh generation costs time the user doesn't want to lose
-on a spontaneous test. So, wherever possible, a finished, verified,
-rendered HTML test file already sits ready per topic. A requested test
-is served instantly from that file. Right after — still within the same
-response — the next test for the same topic is already generated in the
-background, verified, and saved as a new file, so something is ready
-again next time too.
+on a spontaneous test. So, wherever possible, every already-covered
+chapter/module ("unit") of a topic already has its own small bank of
+verified questions sitting ready in `MATERIALS/<Topic>/quiz-data/` (see
+"Module quiz-data banks" below) — prepared in the background as soon as
+that unit is known, not generated fresh each time a quiz is requested.
+Delivering a quiz, whether for one unit or several combined, is then
+just: pull the relevant unit banks, combine and reshuffle them, render.
+No subagent call and no waiting is needed at delivery time as long as
+every requested unit already has a bank; only a genuinely new,
+never-before-banked unit falls back to live generation. Right after any
+delivery, the units that were actually used get their banks quietly
+refreshed in the background, so repeat exposure to the same questions
+stays rare.
 
 ## Live delivery: auto-scored widget (in-chat) — default alongside the file
 
@@ -108,8 +115,13 @@ losing answers by clicking mid-stream on the real 8-question Chapter 1
 quiz, and confirmed fixed on the next render.
 
 ## Folder structure (in the LERNEN project)
-- `QUIZZES/` — holds exactly one ready-to-take test file per topic.
-	Lives in the project root.
+- `QUIZZES/` — holds exactly one ready-to-take test file per topic (or
+	per unit combination currently in play). Lives in the project root.
+- `MATERIALS/<Topic>/quiz-data/` — one verified question bank per
+	chapter/module ("unit") of that topic, named to match the
+	corresponding file in `MATERIALS/<Topic>/`. See "Module quiz-data
+	banks" below. Lives inside `MATERIALS/`, whose overall shape
+	`learning-project-orchestrator` owns.
 - `ARCHIVE/` — taken or finished test files land here (an existing
 	project folder, used project-wide as a store for "no longer active",
 	not a trash can). Lives in the project root.
@@ -125,6 +137,67 @@ quiz, and confirmed fixed on the next render.
 	folder name carries no version number — versioning happens per skill
 	only, via filename and frontmatter (see "Versioning" below).
 
+## Module quiz-data banks
+
+Each already-covered chapter/module of a topic ("unit") has its own
+small, verified bank of questions, prepared ahead of time rather than
+regenerated every time a quiz touches that unit.
+
+**Location and filename.** `MATERIALS/<Topic>/quiz-data/<Unit>.json`,
+where `<Unit>` matches the stem of that unit's file in
+`MATERIALS/<Topic>/` (e.g. `MATERIALS/GarageBand and Trip Hop/Module 3
+Beat and Drums.md` ↔ `MATERIALS/GarageBand and Trip Hop/quiz-data/Module
+3 Beat and Drums.json`). `<Topic>` follows the same convention as
+`MATERIALS/<Topic>/` itself — see `learning-project-orchestrator`'s
+"Source material persistence".
+
+**Schema:**
+```json
+{
+	"topic": "GarageBand and Trip Hop",
+	"unit": "Module 3 Beat and Drums",
+	"material_file": "MATERIALS/GarageBand and Trip Hop/Module 3 Beat and Drums.md",
+	"generated_at": "2026-07-29T15:00:00+02:00",
+	"verified": true,
+	"questions": [
+		{
+			"question": "...",
+			"options": ["...", "...", "...", "..."],
+			"correct": 0
+		}
+	]
+}
+```
+5–15 questions per unit depending on scope, same shape as delivered
+questions (`question`/`options`/`correct`), already run through
+Verification below before being saved here.
+
+**Creating or refreshing a bank** (new unit, or refreshing after use —
+see below): derive questions from that unit's `MATERIALS/<Topic>/
+<Unit>.md` file itself, not from conversation memory — the file is the
+source of truth, which also makes this work for units taught in a past
+session. Run the draft through Verification below, then save. Never
+save an unverified bank.
+
+**Refresh after use.** Once a unit's bank has been included in any
+delivered quiz (solo or combined), regenerate a fresh bank for that
+specific unit right after delivery — same no-repeat principle as
+before, just scoped to the unit actually used instead of the whole
+topic. Cheaper than before: a combined quiz across four units now only
+refreshes those four units' banks, not a whole re-derivation of
+everything covered in the topic.
+
+**Bulk creation must not block the conversation.** Whenever more than
+one or two units need a bank at once — e.g. an initial backfill for an
+already-covered topic, or catching up after several sessions — issue
+one `Agent`-tool call per missing unit and batch all of them into a
+single message so they run in parallel, never sequentially. A bulk
+backfill isn't gating any specific delivery, so there's no reason to
+make the user wait through a queue of subagent calls one at a time.
+Each unit's generation and its Verification is a self-contained
+subagent hand-off (it needs the material file path, not conversation
+context), so parallelizing across units is safe.
+
 ## Filename (mandatory)
 `Quiz – <Topic> <Timestamp>.html`, saved in `QUIZZES/`.
 - `<Topic>`: plain-text topic name (e.g. "Mathematik", "Ohmsches Gesetz",
@@ -133,6 +206,12 @@ quiz, and confirmed fixed on the next render.
 - `<Timestamp>`: format `YYYY-MM-DD_HH-MM` (sortable, no colons for
 	filesystem compatibility), time of generation.
 - Example: `Quiz – Mathematik 2026-07-28_08-26.html`
+- When a delivered quiz combines more than one unit, append the unit
+	range in parentheses before the timestamp: `Quiz – <Topic>
+	(<Unit range>) <Timestamp>.html`, e.g. `Quiz – GarageBand and Trip
+	Hop (Modules 1–4) 2026-07-29_15-11.html`. A quiz covering only a
+	single unit keeps the plain `Quiz – <Topic> <Timestamp>.html` form,
+	no unit suffix.
 - Note: files generated before this version used the spelling
 	`Quizz –` (double z) — a historical artifact of the earlier
 	German-only version. Existing files are not renamed retroactively;
@@ -141,50 +220,43 @@ quiz, and confirmed fixed on the next render.
 
 ## Flow
 
-1. **Determine the topic.** Derive a plain-text name from the topic just
-	discussed or requested.
-2. **Check `QUIZZES/`.** Is there already a file there whose name starts
-	with `Quiz – <Topic> ` (or the legacy `Quizz – <Topic> `)?
-3. **File exists (the normal case):**
-	a. Render the same verified `QUESTIONS` from this file as a live
-		auto-scoring widget per "Live delivery" above — this is the
-		delivery. Don't separately present the file itself (see "Widget
-		is the delivery" above).
-	b. Briefly mention the file exists in `QUIZZES/` as a backup/offline
-		copy, without calling `present_files` on it, if the test is taken
-		outside the chat (directly in the browser) rather than via the
-		live widget (see "Archiving" below).
-	c. Immediately kick off step 5 (refill the pipeline), without
-		waiting for a signal from the user — the delivered file stays
-		untouched in `QUIZZES/` until it's demonstrably been taken (see
-		Archiving).
-4. **No file exists (new topic, or the pipeline happened to be empty):**
-	a. Derive questions as usual from the material just discussed (not
-		from outside sources) — 5–15 questions depending on scope, mixed
-		order across sub-topics.
-	b. Run it through verification (step 6) before delivering.
-	c. Render it as a new file per the naming convention in `QUIZZES/`
-		(silent backup save, no `present_files` call), then deliver via
-		the live auto-scoring widget per "Live delivery" above.
-	d. Immediately kick off step 5, so a pipeline now exists for this
-		topic going forward.
-5. **Refill the pipeline (after every test delivery):**
-	a. Derive a new question list for the same topic from the material
-		discussed so far (different questions/emphasis than the
-		just-delivered test, as far as the material allows).
-	b. Run it through verification (step 6).
-	c. Only render it as a new file once it passes verification. This
-		file is NOT placed in `QUIZZES/` immediately while the previous
-		file for the same topic is still there (see Archiving) — hold it
-		internally instead (e.g. as a draft in the response context or
-		briefly in the working folder) and move it to `QUIZZES/` only
-		once the old file gets archived. Exception: if there was no file
-		for the topic at all to begin with (case 4), place it in
-		`QUIZZES/` right away.
-	d. This runs "in the background" — the user doesn't wait on it. If
-		verification rejects questions and too few remain, prefer a
-		shorter but clean question list over keeping unreliable
-		questions.
+1. **Determine the topic and the unit(s) in scope.** Default to
+	whichever unit(s) were just discussed; if the user names an explicit
+	range ("quiz me on modules 1 through 4", "everything so far"), scope
+	to that instead.
+2. **Check each in-scope unit's bank** in `MATERIALS/<Topic>/quiz-data/`
+	(see "Module quiz-data banks" above).
+	- Bank exists → reuse its verified `questions` directly.
+	- Bank missing (brand-new unit, or one that slipped through) →
+		derive questions from that unit's material now, run them through
+		Verification below, and save the bank before continuing — this
+		is the only case where delivery has to wait on live generation.
+3. **Combine.** Concatenate the question lists of all in-scope units
+	into one working list.
+4. **Interleave.** Shuffle the order across units — not all of one
+	unit's questions followed by all of another's, same "mixed order
+	across sub-topics" principle as a single-unit quiz.
+5. **Re-check the combined distribution.** Even though each unit's bank
+	was already balanced on its own, recombining several can still skew
+	the overall test — recount the `correct`-index distribution across
+	the *combined* list (see "Distribution of the correct answer" under
+	Verification) and reshuffle affected questions' option order if it
+	drifts past the ~30% rule. This is plain counting/reshuffling, not a
+	factual check, so it doesn't need a fresh subagent call — do it
+	directly.
+6. **Render and deliver.** Render the combined, rebalanced list as a
+	live auto-scoring widget per "Live delivery" above — this is the
+	delivery. Save the same list into `QUIZZES/` as a file too, per the
+	naming convention (single- or multi-unit form) — a silent
+	backup/offline copy, not surfaced via `present_files` by default
+	(see "Widget is the delivery" above). Only mention the file
+	explicitly if the test ends up taken outside the chat rather than
+	via the widget (see "Archiving" below).
+7. **Refresh what was used.** Right after delivery, for every unit that
+	was actually included, regenerate and re-verify a fresh bank for
+	that unit (see "Refresh after use" under "Module quiz-data banks"
+	above) — this runs after the user already has their quiz, so it
+	never delays delivery.
 
 ## Archiving (when a file disappears from QUIZZES/)
 
@@ -195,32 +267,35 @@ quiz, and confirmed fixed on the next render.
 	correct.` message described under "Live delivery" above — the file
 	in question is moved from `QUIZZES/` to `ARCHIVE/` via `mv` (never
 	delete; see the project convention "delete means archive", which
-	also applies to Claude's own cleanup — never use `rm`). Immediately
-	after, move the successor file prepared in step 5 into `QUIZZES/`,
-	so a test is ready again right away.
+	also applies to Claude's own cleanup — never use `rm`). The unit
+	bank(s) behind it get refreshed per "Refresh after use" above, so
+	the next request — for this topic or any combination touching these
+	units — assembles fresh from already-ready banks; there's no
+	pre-rendered successor file to move in anymore.
 - **Test taken outside the chat** (the user opens the HTML file
 	themselves in the browser without mentioning it in chat): Claude has
 	no way to detect this. The file stays put until the user moves it to
 	`ARCHIVE` or deletes it by hand. Mention this briefly when delivering
-	a file (see step 3b).
+	a file (see "Flow" above).
 - Never remove a file from `QUIZZES/` without a concrete signal in
 	conversation that it's done.
 
-## Regular check: all topics covered?
+## Regular check: all units banked?
 
 Whenever this skill or a learning topic in the LERNEN project comes up
 (e.g. skill invocation, start of a new learning session, explicit
 question), briefly cross-check:
-- Which topics have already been covered, per `PROGRESS.md` (project
-	root) and prior conversation?
-- Does every one of those topics have a file ready in `QUIZZES/` (name
-	starting with `Quiz – <Topic> `)?
-- If a topic is missing a file (neither in `QUIZZES/` nor as a prepared
-	pipeline draft), generate and verify one per step 4 before it's
-	needed.
-- If many topics are missing at once (e.g. initial setup), briefly check
-	with the user whether to catch up on all of them now, rather than
-	doing it unprompted at large scale.
+- Which chapters/modules ("units") have already been covered, per
+	`PROGRESS.md` (project root) and prior conversation?
+- Does every one of those units have a verified bank in
+	`MATERIALS/<Topic>/quiz-data/` (see "Module quiz-data banks" above)?
+- If a unit is missing a bank, generate and verify one per "Module
+	quiz-data banks" above before it's needed.
+- If several units are missing at once (e.g. initial backfill for an
+	already-covered topic), check with the user whether to catch up on
+	all of them now, then do so via the parallel-batch approach under
+	"Bulk creation must not block the conversation" above — never
+	sequentially for a large batch.
 
 ## Verification (mandatory before any delivery and before placing anything in QUIZZES/)
 
@@ -241,7 +316,11 @@ e. Additionally check the distribution of `correct` indices across the
 	whole question set (see "Distribution of the correct answer" below)
 	and reshuffle the options of affected questions if skewed (change
 	option order, adjust the index accordingly) — question text and
-	content stay unchanged.
+	content stay unchanged. This applies per unit bank at creation time;
+	when several units are later combined into one delivered quiz, the
+	combined set gets re-checked too (see "Flow" above) — that recheck
+	is plain counting, not a factual check, so it doesn't need a fresh
+	subagent call.
 f. Additionally check each question against "No structural tells"
 	above — flag any question where the correct option is noticeably
 	longer, more detailed, or structurally different from the three
@@ -306,8 +385,7 @@ Procedure for rendering a new test file:
 	the freshly verified questions (structure: `question`, `options`,
 	`correct`, where `correct` is the 0-based index of the correct
 	option).
-3. Save as a new file per the naming convention above in `QUIZZES/` (or
-	hold it internally per the pipeline rule, see step 5c).
+3. Save as a new file per the naming convention above in `QUIZZES/`.
 
 Changes to the template (e.g. new feedback or styling rules) apply to
 future rendered tests; files already delivered and sitting in
@@ -620,7 +698,7 @@ pipeline.
 
 ## Versioning
 This SKILL.md carries a `version` field in its frontmatter (currently
-2.6). The parent folder name `TEACHING SKILLS` deliberately carries no
+2.7). The parent folder name `TEACHING SKILLS` deliberately carries no
 version number — versioning is skill-level only (filename +
 frontmatter), never folder-level. A shared folder-level version number
 would have been misleading anyway: if one skill catches up to the
@@ -645,6 +723,26 @@ behavior change can skip a version bump at your discretion — when in
 doubt, bump anyway.
 
 **Changelog:**
+- 2.7: Replaced the "one combined file regenerated per topic" pipeline
+	with per-chapter/module quiz-data banks: each already-covered unit
+	gets its own small, verified question bank in
+	`MATERIALS/<Topic>/quiz-data/<Unit>.json`, prepared ahead of time.
+	Delivering a quiz — whether for one unit or several combined —
+	pulls the relevant banks, combines and reshuffles them, and
+	renders, with no subagent wait as long as every requested unit is
+	already banked. After delivery, only the units actually used get
+	refreshed, not the whole topic, which is cheaper as topics grow.
+	Bulk backfill for an already-covered topic now happens via parallel
+	`Agent`-tool calls in a single message, one per missing unit,
+	instead of a sequential queue. Drops the old "hold a rendered
+	successor file internally until the current one is archived"
+	complexity — nothing needs to be pre-rendered anymore since
+	assembly from verified banks is already instant. Prompted directly
+	by user feedback: "data for quizzes should be background prepared
+	for all known modules. if quiz is taken for several modules at
+	once, just combine the modules for the quiz" — paired with
+	`learning-project-orchestrator`'s new per-topic `MATERIALS/`
+	subfolders (1.6) so bank files can mirror material files 1:1.
 - 2.6: Added a "No structural tells" rule to the format spec and
 	verification checklist: all 4 options must be similar in length and
 	sentence structure, so the correct answer can't be spotted just by

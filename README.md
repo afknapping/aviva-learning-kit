@@ -13,7 +13,7 @@ tracks progress over time.
 	material through guided questions rather than explanation, structured
 	around the AVIVA model's five phases (Arrival, Activate prior
 	knowledge, Inform, Process, Evaluate).
-- `SKILL-interactive-mc-quiz-2.6.md` — generates a multiple-choice quiz for any topic just covered via a live in-chat auto-scoring widget, plus a pipeline so a fresh test is always ready to go;
+- `SKILL-interactive-mc-quiz-2.7.md` — generates a multiple-choice quiz for any topic just covered via a live in-chat auto-scoring widget, backed by per-chapter/module quiz-data banks so a fresh test (single-unit or combined) is always ready to go;
 - `SKILL-learning-project-orchestrator-1.6.md` — bootstraps a new
 	learning project (folder skeleton, progress file, the two skills
 	above) and runs the ongoing per-session loop in an existing one:
@@ -38,6 +38,14 @@ three don't have to be read side by side to see what changed when.
 
 
 ### `interactive-mc-quiz`
+- **2.7** — Replaced the "one combined file regenerated per topic"
+	pipeline with per-chapter/module quiz-data banks in
+	`MATERIALS/<Topic>/quiz-data/<Unit>.json`. A combined quiz across
+	several units now just pulls and reshuffles their existing banks
+	instead of regenerating everything; only the units actually used
+	get refreshed afterward. Bulk backfill for an already-covered topic
+	runs as parallel `Agent` calls, one per missing unit, instead of
+	sequentially.
 - **2.6** — Added a "no structural tells" rule: all 4 options per
 	question must be similar in length and sentence structure, so the
 	correct answer can't be spotted just by being longer or more
